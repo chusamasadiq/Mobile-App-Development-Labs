@@ -1,0 +1,93 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart';
+import 'dart:convert';
+
+void main() {
+  runApp(
+      MaterialApp(
+        title: 'Weather App On Single Screen',
+        home: location()
+      )
+  );
+}
+
+class location extends StatefulWidget {
+  @override
+  _locationState createState() => _locationState();
+}
+
+class _locationState extends State<location> {
+  double? lat;
+  double? lon;
+  double? temperature;
+  dynamic LocationWeather;
+  String? CityName;
+  String? description;
+  int? timezone;
+
+  void getlocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low);
+
+      lat = position.latitude;
+      lon = position.longitude;
+      print(position);
+      Response res = await get(Uri.parse(
+          'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=931e8bdeccb205992200128a5f3a3e95'));
+      if (res.statusCode == 200) {
+        var data = res.body;
+        LocationWeather =jsonDecode(data);
+        // print(data);
+        setState(() {
+          temperature = LocationWeather['main']['temp'];
+          CityName = LocationWeather['name'].toString();
+          description= LocationWeather['weather'][0]['description'];
+          timezone= LocationWeather['timezone'];
+        });
+
+
+      }
+    } catch (e) {
+      print(e);
+      getlocation();
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getlocation();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        alignment: Alignment.center,
+       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text('Temperature: $temperature'),
+          SizedBox(
+            height: 20,
+          ),
+          Text('City Name: $CityName'),
+          SizedBox(
+            height: 20,
+          ),
+          Text('Description: $description'),
+          SizedBox(
+            height: 20,
+          ),
+          Text('Description: $timezone'),
+        ],
+      ),
+      )
+    );
+  }
+}
